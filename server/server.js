@@ -8,6 +8,7 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3001;
 const LEONARDO_API_URL = "https://cloud.leonardo.ai/api/rest/v1";
+const OPENAI_API_URL = "https://api.openai.com/v1/chat/completions";
 
 app.use(cors());
 app.use(express.json());
@@ -95,6 +96,49 @@ app.get("/api/generations/:generationId", async (req, res) => {
     );
     res.status(error.response?.status || 500).json({
       error: "Failed to fetch generation status",
+      details: error.response?.data || error.message,
+    });
+  }
+});
+
+app.post("/api/story", async (req, res) => {
+  const { prompt, model = "gpt-3.5-turbo" } = req.body;
+  const apiKey = process.env.OPENAI_API_KEY;
+
+  if (!apiKey) {
+    return res
+      .status(500)
+      .json({ error: "API key for OpenAI is not configured." });
+  }
+  if (!prompt) {
+    return res.status(400).json({ error: "Prompt is required." });
+  }
+
+  try {
+    const payload = {
+      model,
+      messages: [{ role: "user", content: prompt }],
+      temperature: 0.7,
+    };
+
+    const response = await axios.post(OPENAI_API_URL, payload, {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+      },
+    });
+
+    const story = response.data.choices?.[0]?.message?.content || "";
+    res.json({ story });
+  } catch (error) {
+    console.error(
+      "Error generating story:",
+      error.response
+        ? JSON.stringify(error.response.data, null, 2)
+        : error.message
+    );
+    res.status(error.response?.status || 500).json({
+      error: "Failed to generate story",
       details: error.response?.data || error.message,
     });
   }
