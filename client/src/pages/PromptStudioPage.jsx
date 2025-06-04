@@ -17,6 +17,30 @@ const chatGptModels = [
   { id: "gpt-3.5-turbo", name: "GPT-3.5 Turbo (Fast)" },
 ];
 
+const heroOptions = [
+  {
+    id: "hero1",
+    name: "Hero 1",
+    image: "https://via.placeholder.com/150?text=Hero+1",
+  },
+  {
+    id: "hero2",
+    name: "Hero 2",
+    image: "https://via.placeholder.com/150?text=Hero+2",
+  },
+  {
+    id: "hero3",
+    name: "Hero 3",
+    image: "https://via.placeholder.com/150?text=Hero+3",
+  },
+];
+
+const channelOptions = [
+  { id: "youtube", name: "YouTube", image: "https://via.placeholder.com/80?text=YT" },
+  { id: "instagram", name: "Instagram", image: "https://via.placeholder.com/80?text=IG" },
+  { id: "tiktok", name: "TikTok", image: "https://via.placeholder.com/80?text=TT" },
+];
+
 const postImageGeneration = async (params) => {
   const { data } = await axios.post(`${API_BASE_URL}/generations`, params);
   return data.sdGenerationJob.generationId;
@@ -28,6 +52,11 @@ const fetchGenerationResult = async (generationId) => {
     `${API_BASE_URL}/generations/${generationId}`
   );
   return data.generations_by_pk;
+};
+
+const postStoryGeneration = async (params) => {
+  const { data } = await axios.post(`${API_BASE_URL}/story`, params);
+  return data.story;
 };
 
 function PromptStudioPage() {
@@ -54,6 +83,11 @@ function PromptStudioPage() {
   const [seed, setSeed] = useState("");
   const [showAdvanced, setShowAdvanced] = useState(false);
 
+  const [currentStep, setCurrentStep] = useState("setup");
+  const [selectedHero, setSelectedHero] = useState(heroOptions[0].id);
+  const [productImage, setProductImage] = useState(null);
+  const [selectedChannel, setSelectedChannel] = useState(channelOptions[0].id);
+
   const [useAlchemy, setUseAlchemy] = useState(false);
   const [usePhotoReal, setUsePhotoReal] = useState(false);
   const [controlNetType, setControlNetType] = useState("none");
@@ -67,6 +101,17 @@ function PromptStudioPage() {
 
   const randomizeSeed = () => {
     setSeed(Math.floor(Math.random() * 9999999999).toString());
+  };
+
+  const handleProductImage = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = () => setProductImage(reader.result);
+      reader.readAsDataURL(file);
+    } else {
+      setProductImage(null);
+    }
   };
 
   const imageGenerationMutation = useMutation({
@@ -88,6 +133,23 @@ function PromptStudioPage() {
       );
       setCurrentGenerationId(null);
       setIsUiLoading(false); // UI 로딩 종료
+    },
+  });
+
+  const storyGenerationMutation = useMutation({
+    mutationFn: postStoryGeneration,
+    onSuccess: (story) => {
+      setGeneratedStory(story);
+      setIsUiLoading(false);
+      setErrorMsg("");
+    },
+    onError: (error) => {
+      setErrorMsg(
+        `Failed to generate story: ${
+          error.response?.data?.error || error.message
+        }`
+      );
+      setIsUiLoading(false);
     },
   });
 
@@ -163,20 +225,135 @@ function PromptStudioPage() {
       setCurrentGenerationId(null);
       setIsUiLoading(true);
       setGeneratedStory("");
-      setTimeout(() => {
-        setGeneratedStory(
-          `(Story Generation with ChatGPT - Not Implemented) Prompt: "${prompt}"`
-        );
-        setIsUiLoading(false);
-      }, 1000);
+      storyGenerationMutation.mutate({
+        prompt,
+        model: selectedChatGptModel,
+        hero: selectedHero,
+        channel: selectedChannel,
+        productImage,
+      });
     }
   };
 
-  const isLoadingDisplay = imageGenerationMutation.isPending || isUiLoading;
+  const isLoadingDisplay =
+    imageGenerationMutation.isPending ||
+    storyGenerationMutation.isPending ||
+    isUiLoading;
+
+  if (currentStep === "setup") {
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-center space-x-4">
+          <button
+            onClick={() => setCurrentStep("setup")}
+            className="px-4 py-2 rounded-md bg-indigo-600 text-white"
+          >
+            Setup
+          </button>
+          <button
+            onClick={() => setCurrentStep("generate")}
+            className="px-4 py-2 rounded-md bg-gray-700 text-gray-300"
+          >
+            Generate
+          </button>
+        </div>
+        <div className="bg-gray-800 p-6 rounded-xl shadow-xl space-y-6">
+          <h2 className="text-2xl font-semibold text-gray-100 mb-4">Story Setup</h2>
+          <div>
+            <p className="text-sm font-medium text-gray-300 mb-2">Select Hero</p>
+            <div className="grid grid-cols-3 gap-4">
+              {heroOptions.map((hero) => (
+                <button
+                  key={hero.id}
+                  onClick={() => setSelectedHero(hero.id)}
+                  className={`border rounded-lg p-2 text-center ${
+                    selectedHero === hero.id
+                      ? "border-indigo-500 bg-gray-700"
+                      : "border-gray-600"
+                  }`}
+                >
+                  <img
+                    src={hero.image}
+                    alt={hero.name}
+                    className="w-full h-20 object-cover rounded"
+                  />
+                  <p className="mt-1 text-xs">{hero.name}</p>
+                </button>
+              ))}
+            </div>
+          </div>
+          <div>
+            <p className="text-sm font-medium text-gray-300 mb-2">
+              Product Image (optional)
+            </p>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleProductImage}
+              className="text-gray-300"
+            />
+            {productImage && (
+              <img
+                src={productImage}
+                alt="Product"
+                className="mt-2 h-20 object-cover rounded"
+              />
+            )}
+          </div>
+          <div>
+            <p className="text-sm font-medium text-gray-300 mb-2">Channel</p>
+            <div className="flex space-x-2">
+              {channelOptions.map((ch) => (
+                <button
+                  key={ch.id}
+                  onClick={() => setSelectedChannel(ch.id)}
+                  className={`p-2 rounded-md border text-xs flex flex-col items-center ${
+                    selectedChannel === ch.id
+                      ? "border-indigo-500 bg-gray-700"
+                      : "border-gray-600"
+                  }`}
+                >
+                  <img
+                    src={ch.image}
+                    alt={ch.name}
+                    className="w-10 h-10 object-cover"
+                  />
+                  <span className="mt-1">{ch.name}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="text-right">
+            <button
+              onClick={() => setCurrentStep("generate")}
+              className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md"
+            >
+              Continue
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="animate-fadeIn grid grid-cols-1 lg:grid-cols-3 gap-8">
-      <div className="lg:col-span-1 space-y-6 p-6 bg-gray-800 rounded-xl shadow-xl">
+    <div className="space-y-6">
+      <div className="flex justify-center space-x-4">
+        <button
+          onClick={() => setCurrentStep("setup")}
+          className="px-4 py-2 rounded-md bg-gray-700 text-gray-300"
+        >
+          Setup
+        </button>
+        <button
+          onClick={() => setCurrentStep("generate")}
+          className="px-4 py-2 rounded-md bg-indigo-600 text-white"
+        >
+          Generate
+        </button>
+      </div>
+      <div className="animate-fadeIn grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-1 space-y-6 p-6 bg-gray-800 rounded-xl shadow-xl">
         <div>
           <h2 className="text-2xl font-semibold mb-4 text-gray-100">
             Generation Settings
@@ -523,10 +700,10 @@ function PromptStudioPage() {
 
         <button
           onClick={handleGenerate}
-          disabled={isLoadingDisplay || imageGenerationMutation.isPending}
+          disabled={isLoadingDisplay}
           className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-6 rounded-lg shadow-md hover:shadow-lg transition-all duration-300 ease-in-out transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed mt-4"
         >
-          {isLoadingDisplay || imageGenerationMutation.isPending ? (
+          {isLoadingDisplay ? (
             <div className="flex items-center justify-center">
               <svg
                 className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
