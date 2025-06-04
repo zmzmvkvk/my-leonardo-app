@@ -94,8 +94,6 @@ function PromptStudioPage() {
   const [numImages, setNumImages] = useState(1);
   const [seed, setSeed] = useState("");
   const [showAdvanced, setShowAdvanced] = useState(false);
-
-  const [currentStep, setCurrentStep] = useState("setup");
   const [selectedHero, setSelectedHero] = useState(heroOptions[0].id);
   const [productImage, setProductImage] = useState(null);
   const [selectedChannel, setSelectedChannel] = useState(channelOptions[0].id);
@@ -252,122 +250,8 @@ function PromptStudioPage() {
     storyGenerationMutation.isPending ||
     isUiLoading;
 
-  if (currentStep === "setup") {
-    return (
-      <div className="space-y-6">
-        <div className="flex justify-center space-x-4">
-          <button
-            onClick={() => setCurrentStep("setup")}
-            className="px-4 py-2 rounded-md bg-indigo-600 text-white"
-          >
-            Setup
-          </button>
-          <button
-            onClick={() => setCurrentStep("generate")}
-            className="px-4 py-2 rounded-md bg-gray-700 text-gray-300"
-          >
-            Generate
-          </button>
-        </div>
-        <div className="bg-gray-800 p-6 rounded-xl shadow-xl space-y-6">
-          <h2 className="text-2xl font-semibold text-gray-100 mb-4">
-            Story Setup
-          </h2>
-          <div>
-            <p className="text-sm font-medium text-gray-300 mb-2">
-              Select Hero
-            </p>
-            <div className="grid grid-cols-3 gap-4">
-              {heroOptions.map((hero) => (
-                <button
-                  key={hero.id}
-                  onClick={() => setSelectedHero(hero.id)}
-                  className={`border rounded-lg p-2 text-center ${
-                    selectedHero === hero.id
-                      ? "border-indigo-500 bg-gray-700"
-                      : "border-gray-600"
-                  }`}
-                >
-                  <img
-                    src={hero.image}
-                    alt={hero.name}
-                    className="w-full h-20 object-cover rounded"
-                  />
-                  <p className="mt-1 text-xs">{hero.name}</p>
-                </button>
-              ))}
-            </div>
-          </div>
-          <div>
-            <p className="text-sm font-medium text-gray-300 mb-2">
-              Product Image (optional)
-            </p>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleProductImage}
-              className="text-gray-300"
-            />
-            {productImage && (
-              <img
-                src={productImage}
-                alt="Product"
-                className="mt-2 h-20 object-cover rounded"
-              />
-            )}
-          </div>
-          <div>
-            <p className="text-sm font-medium text-gray-300 mb-2">Channel</p>
-            <div className="flex space-x-2">
-              {channelOptions.map((ch) => (
-                <button
-                  key={ch.id}
-                  onClick={() => setSelectedChannel(ch.id)}
-                  className={`p-2 rounded-md border text-xs flex flex-col items-center ${
-                    selectedChannel === ch.id
-                      ? "border-indigo-500 bg-gray-700"
-                      : "border-gray-600"
-                  }`}
-                >
-                  <img
-                    src={ch.image}
-                    alt={ch.name}
-                    className="w-10 h-10 object-cover"
-                  />
-                  <span className="mt-1">{ch.name}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-          <div className="text-right">
-            <button
-              onClick={() => setCurrentStep("generate")}
-              className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md"
-            >
-              Continue
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-6">
-      <div className="flex justify-center space-x-4">
-        <button
-          onClick={() => setCurrentStep("setup")}
-          className="px-4 py-2 rounded-md bg-gray-700 text-gray-300"
-        >
-          Setup
-        </button>
-        <button
-          onClick={() => setCurrentStep("generate")}
-          className="px-4 py-2 rounded-md bg-indigo-600 text-white"
-        >
-          Generate
-        </button>
-      </div>
       <div className="animate-fadeIn grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-1 space-y-6 p-6 bg-gray-800 rounded-xl shadow-xl">
           <div>
