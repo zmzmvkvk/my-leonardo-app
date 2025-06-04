@@ -18,13 +18,14 @@ This project demonstrates a simple Leonardo AI and ChatGPT integration.
    cd client && npm run dev
    ```
 
+When you open a project in the dashboard, you will first land on the **Setup**
+tab where you choose a hero, optional product image and channel. Hitting the
+**Story AI Generation** button saves these settings to Firebase and unlocks the
+Story Creation tab.
+
 ## Using the Prompt Studio
 1. Open `http://localhost:5173/studio` in your browser.
-2. You will see two steps at the top: **Setup** and **Generate**.
-3. In **Setup**, choose a hero, optionally upload a product image and pick the
-desired platform (YouTube, Instagram or TikTok). Click **Continue**.
-4. In **Generate**, enter a prompt and select `Story (ChatGPT)` from the type
-dropdown to produce a short script. You can also generate images via Leonardo AI.
-5. Click **Generate** to start. The story will appear in the results panel.
+2. The studio now jumps directly to the generation tools. Enter a prompt and select `Story (ChatGPT)` or choose image generation.
+3. Click **Generate** to start and the result will appear in the panel.
 
 The API key for ChatGPT is read from `OPENAI_API_KEY` in the server environment.
